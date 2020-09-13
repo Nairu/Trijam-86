@@ -1,0 +1,382 @@
+[gd_scene load_steps=31 format=2]
+
+[ext_resource path="res://TestRotate.gd" type="Script" id=1]
+[ext_resource path="res://assets/Sun.png" type="Texture" id=2]
+[ext_resource path="res://assets/LightTexture.png" type="Texture" id=3]
+[ext_resource path="res://assets/Orbiter.png" type="Texture" id=4]
+[ext_resource path="res://assets/BG.png" type="Texture" id=5]
+[ext_resource path="res://assets/UI_D.png" type="Texture" id=6]
+[ext_resource path="res://assets/UI_A.png" type="Texture" id=7]
+[ext_resource path="res://ProjectileManager.gd" type="Script" id=8]
+[ext_resource path="res://scenes/Projectile.tscn" type="PackedScene" id=9]
+[ext_resource path="res://Sun.gd" type="Script" id=10]
+[ext_resource path="res://assets/font64.tres" type="DynamicFont" id=11]
+[ext_resource path="res://UI.gd" type="Script" id=12]
+[ext_resource path="res://OutOfBounds.gd" type="Script" id=13]
+[ext_resource path="res://GameManager.gd" type="Script" id=14]
+[ext_resource path="res://AudioManager.gd" type="Script" id=15]
+[ext_resource path="res://sounds/SFX_Collision.wav" type="AudioStream" id=16]
+[ext_resource path="res://sounds/SFX_LifeDeplete.wav" type="AudioStream" id=17]
+[ext_resource path="res://sounds/SFX_Sunfire.wav" type="AudioStream" id=18]
+[ext_resource path="res://assets/Health.png" type="Texture" id=19]
+[ext_resource path="res://GameOver.gd" type="Script" id=20]
+[ext_resource path="res://assets/font28.tres" type="DynamicFont" id=21]
+[ext_resource path="res://assets/BG_Star.png" type="Texture" id=22]
+[ext_resource path="res://assets/BG_Space (1).png" type="Texture" id=23]
+[ext_resource path="res://MainMenu.gd" type="Script" id=24]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+render_mode blend_mix;
+
+uniform bool invert_x : bool;
+uniform bool invert_y : bool;
+uniform float x_scroll_speed : hint_range(0.01, 10.0, 0.01);
+uniform float y_scroll_speed : hint_range(0.01, 10.0, 0.01);
+
+void fragment() {
+	vec2 uv = UV;
+	uv.x += TIME * x_scroll_speed * (invert_x ? -1.0 : 1.0);
+	uv.y += TIME * y_scroll_speed * (invert_y ? -1.0 : 1.0);
+	uv.x = mod(uv.x, 1.0);
+	uv.y = mod(uv.y, 1.0);
+	COLOR = texture(TEXTURE, uv);
+}"
+custom_defines = ""
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/invert_x = null
+shader_param/invert_y = null
+shader_param/x_scroll_speed = 0.01
+shader_param/y_scroll_speed = 0.01
+
+[sub_resource type="RectangleShape2D" id=3]
+extents = Vector2( 59.5348, 6.86244 )
+
+[sub_resource type="CircleShape2D" id=4]
+radius = 37.0135
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 522, 10 )
+
+[sub_resource type="RectangleShape2D" id=6]
+extents = Vector2( 10, 310 )
+
+[node name="Root" type="Node2D"]
+script = ExtResource( 14 )
+
+[node name="AudioManager" type="Node2D" parent="."]
+position = Vector2( 512, 300 )
+script = ExtResource( 15 )
+sounds = {
+"collision": ExtResource( 16 ),
+"deplete": ExtResource( 17 ),
+"fire": ExtResource( 18 )
+}
+
+[node name="Background" type="Sprite" parent="."]
+position = Vector2( 512, 300 )
+texture = ExtResource( 5 )
+
+[node name="BackgroundSpace" type="Sprite" parent="."]
+position = Vector2( 512, 300 )
+texture = ExtResource( 23 )
+
+[node name="Stars" type="Sprite" parent="."]
+material = SubResource( 2 )
+position = Vector2( 512, 300 )
+texture = ExtResource( 22 )
+
+[node name="Game" type="Node2D" parent="."]
+visible = false
+
+[node name="PaddleRoot" type="Node2D" parent="Game"]
+position = Vector2( 512, 300 )
+script = ExtResource( 1 )
+pressed = Color( 0, 0.976471, 1, 1 )
+released = Color( 1, 1, 1, 1 )
+speed = 5.0
+
+[node name="PaddleImg" type="Node2D" parent="Game/PaddleRoot"]
+
+[node name="Images" type="Node2D" parent="Game/PaddleRoot/PaddleImg"]
+position = Vector2( 0, -120 )
+scale = Vector2( 0.5, 0.5 )
+
+[node name="Paddle Sprite" type="Sprite" parent="Game/PaddleRoot/PaddleImg/Images"]
+position = Vector2( 0.041748, -249.985 )
+texture = ExtResource( 4 )
+
+[node name="AImg" type="Sprite" parent="Game/PaddleRoot/PaddleImg/Images"]
+position = Vector2( -80, -280 )
+texture = ExtResource( 7 )
+
+[node name="DImg" type="Sprite" parent="Game/PaddleRoot/PaddleImg/Images"]
+position = Vector2( 80, -280 )
+texture = ExtResource( 6 )
+
+[node name="PaddleCollider" type="Area2D" parent="Game/PaddleRoot/PaddleImg"]
+position = Vector2( 0, -250 )
+gravity = 0.0
+
+[node name="PaddleColliderShape" type="CollisionShape2D" parent="Game/PaddleRoot/PaddleImg/PaddleCollider"]
+position = Vector2( 0, 10 )
+shape = SubResource( 3 )
+
+[node name="Projectiles" type="Node2D" parent="Game"]
+position = Vector2( 512, 300 )
+script = ExtResource( 8 )
+projectile = ExtResource( 9 )
+sun_collider = NodePath("../Game/Sun")
+starting_speed = 4.0
+arrow_offset_time = 1.0
+
+[node name="ArrowRotate" type="Node2D" parent="Game/Projectiles"]
+visible = false
+modulate = Color( 1, 0.2, 0, 1 )
+self_modulate = Color( 0, 0.717647, 1, 1 )
+scale = Vector2( 0.3, 1 )
+
+[node name="Arrow" type="Sprite" parent="Game/Projectiles/ArrowRotate"]
+position = Vector2( -0.408508, -33.0387 )
+rotation = 1.5708
+texture = ExtResource( 7 )
+
+[node name="Sun" type="Area2D" parent="Game"]
+position = Vector2( 512, 300 )
+gravity = 0.0
+script = ExtResource( 10 )
+
+[node name="Sprite" type="Sprite" parent="Game/Sun"]
+modulate = Color( 0.87451, 1, 0, 1 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 2 )
+
+[node name="Light2D" type="Light2D" parent="Game/Sun"]
+texture = ExtResource( 3 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="SunCollider" type="CollisionShape2D" parent="Game/Sun"]
+shape = SubResource( 4 )
+
+[node name="OutOfBounds" type="Node2D" parent="Game"]
+script = ExtResource( 13 )
+
+[node name="TopBound" type="Area2D" parent="Game/OutOfBounds"]
+position = Vector2( 512, -20 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Game/OutOfBounds/TopBound"]
+shape = SubResource( 5 )
+
+[node name="BottomBound" type="Area2D" parent="Game/OutOfBounds"]
+position = Vector2( 512, 620 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Game/OutOfBounds/BottomBound"]
+shape = SubResource( 5 )
+
+[node name="LeftBound" type="Area2D" parent="Game/OutOfBounds"]
+position = Vector2( -20, 300 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Game/OutOfBounds/LeftBound"]
+shape = SubResource( 6 )
+
+[node name="RightBound" type="Area2D" parent="Game/OutOfBounds"]
+position = Vector2( 1044, 300 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Game/OutOfBounds/RightBound"]
+shape = SubResource( 6 )
+
+[node name="MainMenu" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 24 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+game_ui = NodePath("../GameUI")
+game = NodePath("../Game")
+paddle = NodePath("../Game/PaddleRoot")
+sun = NodePath("../Game/Projectiles")
+
+[node name="MainMenuText" type="Label" parent="MainMenu"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 387.0
+margin_top = 200.0
+margin_right = 637.0
+margin_bottom = 270.0
+custom_fonts/font = ExtResource( 11 )
+text = "SOLAR   FLARE"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StartText" type="Button" parent="MainMenu"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 394.122
+margin_top = 344.307
+margin_right = 644.122
+margin_bottom = 414.307
+custom_fonts/font = ExtResource( 21 )
+text = "Press Space to Start"
+
+[node name="GameOver" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 20 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+game_ui = NodePath("../GameUI")
+game = NodePath("../Game")
+
+[node name="GameOverText" type="Label" parent="GameOver"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 401.0
+margin_top = 150.0
+margin_right = 623.0
+margin_bottom = 220.0
+custom_fonts/font = ExtResource( 11 )
+text = "GAME   OVER"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FinalScore" type="Label" parent="GameOver"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 386.0
+margin_top = 380.0
+margin_right = 638.0
+margin_bottom = 449.0
+custom_fonts/font = ExtResource( 11 )
+text = "Final Score: 0"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ContinueText" type="Button" parent="GameOver"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 387.376
+margin_top = 439.99
+margin_right = 639.376
+margin_bottom = 508.99
+custom_fonts/font = ExtResource( 21 )
+text = "Press Space to Reset"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GameUI" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 12 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Score" type="Label" parent="GameUI"]
+modulate = Color( 0, 1, 1, 1 )
+margin_left = 12.3471
+margin_top = 12.3471
+margin_right = 185.347
+margin_bottom = 81.3471
+custom_fonts/font = ExtResource( 11 )
+text = "Score:  0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Lifes" type="Control" parent="GameUI"]
+margin_left = 12.3471
+margin_top = 12.3471
+margin_right = 52.3471
+margin_bottom = 52.3471
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Life3" type="TextureRect" parent="GameUI/Lifes"]
+modulate = Color( 0, 0.976471, 1, 1 )
+margin_left = 920.0
+margin_top = -10.0
+margin_right = 1220.0
+margin_bottom = 290.0
+rect_scale = Vector2( 0.3, 0.3 )
+texture = ExtResource( 19 )
+expand = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Life2" type="TextureRect" parent="GameUI/Lifes"]
+modulate = Color( 0, 0.976471, 1, 1 )
+margin_left = 860.0
+margin_top = -10.0
+margin_right = 1160.0
+margin_bottom = 290.0
+rect_scale = Vector2( 0.3, 0.3 )
+texture = ExtResource( 19 )
+expand = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Life1" type="TextureRect" parent="GameUI/Lifes"]
+modulate = Color( 0, 0.976471, 1, 1 )
+margin_left = 800.0
+margin_top = -10.0
+margin_right = 1100.0
+margin_bottom = 290.0
+rect_scale = Vector2( 0.3, 0.3 )
+texture = ExtResource( 19 )
+expand = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Buttons" type="Control" parent="GameUI"]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="ButtonA" type="Button" parent="GameUI/Buttons"]
+margin_left = 50.0
+margin_top = 264.0
+margin_right = 128.0
+margin_bottom = 312.0
+rect_scale = Vector2( 1.5, 1.5 )
+icon = ExtResource( 7 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ButtonD" type="Button" parent="GameUI/Buttons"]
+margin_left = 857.0
+margin_top = 264.0
+margin_right = 935.0
+margin_bottom = 312.0
+rect_scale = Vector2( 1.5, 1.5 )
+icon = ExtResource( 6 )
+[connection signal="body_entered" from="Game/PaddleRoot/PaddleImg/PaddleCollider" to="Game/PaddleRoot" method="_on_PaddleCollider_body_entered"]
+[connection signal="body_entered" from="Game/Sun" to="Game/Sun" method="_on_Sun_body_entered"]
+[connection signal="update_score" from="Game/Sun" to="GameUI" method="update_score"]
+[connection signal="lose_life" from="Game/OutOfBounds" to="GameUI" method="update_lives"]
+[connection signal="body_entered" from="Game/OutOfBounds/TopBound" to="Game/OutOfBounds" method="_on_body_entered"]
+[connection signal="body_entered" from="Game/OutOfBounds/BottomBound" to="Game/OutOfBounds" method="_on_body_entered"]
+[connection signal="body_entered" from="Game/OutOfBounds/LeftBound" to="Game/OutOfBounds" method="_on_body_entered"]
+[connection signal="body_entered" from="Game/OutOfBounds/RightBound" to="Game/OutOfBounds" method="_on_body_entered"]
+[connection signal="button_down" from="MainMenu/StartText" to="MainMenu" method="_start"]
+[connection signal="pressed" from="MainMenu/StartText" to="MainMenu" method="_start"]
+[connection signal="pressed" from="GameOver/ContinueText" to="GameOver" method="_restart"]
+[connection signal="lost_game" from="GameUI" to="GameOver" method="game_over"]
+[connection signal="button_down" from="GameUI/Buttons/ButtonA" to="Game/PaddleRoot" method="_on_ButtonA_button_down"]
+[connection signal="button_up" from="GameUI/Buttons/ButtonA" to="Game/PaddleRoot" method="_on_ButtonA_button_up"]
+[connection signal="button_down" from="GameUI/Buttons/ButtonD" to="Game/PaddleRoot" method="_on_ButtonD_button_down"]
+[connection signal="button_up" from="GameUI/Buttons/ButtonD" to="Game/PaddleRoot" method="_on_ButtonD_button_up"]
